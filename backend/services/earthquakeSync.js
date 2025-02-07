@@ -1,6 +1,26 @@
 const axios = require('axios');
-const db = require('../models');
 const { Sequelize } = require('sequelize');
+const db = require('../models');
+const config = require('../config/app.config');
+
+let syncInterval;
+
+const startSync = () => {
+    // İlk senkronizasyonu hemen yap
+    syncEarthquakes();
+    
+    // Periyodik senkronizasyonu başlat
+    syncInterval = setInterval(syncEarthquakes, config.earthquake.syncInterval);
+    
+    console.log(`Deprem senkronizasyonu başlatıldı (${config.earthquake.syncInterval/1000} saniye aralıkla)`);
+};
+
+const stopSync = () => {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        console.log('Deprem senkronizasyonu durduruldu');
+    }
+};
 
 const parseEarthquakeData = (text) => {
   try {
@@ -80,70 +100,84 @@ const parseEarthquakeData = (text) => {
 };
 
 const syncEarthquakes = async () => {
-  try {
-    console.log('Deprem verileri güncelleniyor...');
-    const response = await axios.get('http://koeri.boun.edu.tr/scripts/lst0.asp', {
-      responseType: 'arraybuffer'
-    });
+    let retries = 0;
     
-    const data = Buffer.from(response.data).toString('latin1');
-    const earthquakes = parseEarthquakeData(data);
-    
-    // Her bir deprem verisi için
-    for (const eq of earthquakes) {
-      try {
-        // Veri doğrulama
-        if (!eq.date || !eq.latitude || !eq.longitude || !eq.magnitude) {
-          console.error('Eksik veri:', eq);
-          continue;
-        }
+    const trySync = async () => {
+        try {
+            console.log('Deprem verileri güncelleniyor...');
+            const response = await axios.get(config.earthquake.dataSource.url, {
+                responseType: 'arraybuffer'
+            });
+            
+            const data = Buffer.from(response.data).toString(config.earthquake.dataSource.encoding);
+            const earthquakes = parseEarthquakeData(data);
+            
+            // Her bir deprem verisi için
+            for (const eq of earthquakes) {
+                try {
+                    // Veri doğrulama
+                    if (!eq.date || !eq.latitude || !eq.longitude || !eq.magnitude) {
+                        console.error('Eksik veri:', eq);
+                        continue;
+                    }
 
-        // Aynı tarih ve koordinatlara sahip deprem var mı kontrol et
-        const [existing] = await db.sequelize.query(`
-          SELECT id FROM earthquakes 
-          WHERE date = :date 
-          AND latitude = :latitude 
-          AND longitude = :longitude
-        `, {
-          replacements: { 
-            date: eq.date,
-            latitude: eq.latitude,
-            longitude: eq.longitude
-          },
-          type: Sequelize.QueryTypes.SELECT
-        });
+                    // Aynı tarih ve koordinatlara sahip deprem var mı kontrol et
+                    const [existing] = await db.sequelize.query(`
+                        SELECT id FROM earthquakes 
+                        WHERE date = :date 
+                        AND latitude = :latitude 
+                        AND longitude = :longitude
+                    `, {
+                        replacements: { 
+                            date: eq.date,
+                            latitude: eq.latitude,
+                            longitude: eq.longitude
+                        },
+                        type: Sequelize.QueryTypes.SELECT
+                    });
 
-        if (!existing) {
-          // Yeni deprem verisini ekle
-          await db.sequelize.query(`
-            INSERT INTO earthquakes (
-              date, latitude, longitude, depth, magnitude, 
-              location, md, ml, mw, "createdAt", "updatedAt"
-            ) VALUES (
-              :date, :latitude, :longitude, :depth, :magnitude,
-              :location, :md, :ml, :mw, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-            )
-          `, {
-            replacements: eq,
-            type: Sequelize.QueryTypes.INSERT
-          });
+                    if (!existing) {
+                        // Yeni deprem verisini ekle
+                        await db.sequelize.query(`
+                            INSERT INTO earthquakes (
+                                date, latitude, longitude, depth, magnitude, 
+                                location, md, ml, mw, "createdAt", "updatedAt"
+                            ) VALUES (
+                                :date, :latitude, :longitude, :depth, :magnitude,
+                                :location, :md, :ml, :mw, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                            )
+                        `, {
+                            replacements: eq,
+                            type: Sequelize.QueryTypes.INSERT
+                        });
+                    }
+                } catch (err) {
+                    console.error('Deprem verisi eklenirken hata:', err, 'Veri:', eq);
+                    continue;
+                }
+            }
+            
+            console.log('Deprem verileri güncellendi');
+        } catch (error) {
+            console.error('Deprem verileri güncellenirken hata:', error);
+            
+            if (retries < config.earthquake.maxRetries) {
+                retries++;
+                console.log(`Yeniden deneniyor (${retries}/${config.earthquake.maxRetries})...`);
+                setTimeout(trySync, config.earthquake.retryInterval);
+            }
         }
-      } catch (err) {
-        console.error('Deprem verisi eklenirken hata:', err, 'Veri:', eq);
-        continue;
-      }
-    }
-    
-    console.log('Deprem verileri güncellendi');
-  } catch (error) {
-    console.error('Deprem verileri güncellenirken hata:', error);
-  }
+    };
+
+    await trySync();
 };
 
-// İlk senkronizasyonu yap
-syncEarthquakes();
+// Servis başlatıldığında otomatik olarak senkronizasyonu başlat
+startSync();
 
-// Her 5 dakikada bir senkronize et
-setInterval(syncEarthquakes, 5 * 60 * 1000);
-
-module.exports = { syncEarthquakes }; 
+// Dışa aktar
+module.exports = {
+    startSync,
+    stopSync,
+    syncEarthquakes // Manuel senkronizasyon için
+}; 

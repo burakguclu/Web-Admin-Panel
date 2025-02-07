@@ -4,7 +4,7 @@ const cors = require('cors');
 const earthquakesRouter = require('./routes/earthquakes');
 const citiesRouter = require('./routes/cities');
 const devicesRouter = require('./routes/devices');
-require('./services/earthquakeSync');
+const earthquakeSync = require('./services/earthquakeSync');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -23,6 +23,13 @@ app.get('/', (req, res) => {
   res.json({ message: 'Backend API is running' });
 });
 
-app.listen(process.env.port || 5000, () => {
+app.listen(port, () => {
   console.log(`Server running on port ${port}`);
-}); 
+  earthquakeSync.startSync();
+});
+
+// Uygulama kapanırken senkronizasyonu durdur
+process.on('SIGTERM', () => {
+  earthquakeSync.stopSync();
+  process.exit(0);
+});
