@@ -30,7 +30,23 @@ import { fetchDashboardStats } from '../services/earthquakeService';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
+function useWindowSize() {
+    const [size, setSize] = useState([0, 0]);
+
+    useEffect(() => {
+        function updateSize() {
+            setSize([window.innerWidth, window.innerHeight]);
+        }
+        window.addEventListener('resize', updateSize);
+        updateSize();
+        return () => window.removeEventListener('resize', updateSize);
+    }, []);
+
+    return size;
+}
+
 function Dashboard() {
+    const [width] = useWindowSize();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -73,15 +89,29 @@ function Dashboard() {
 
     if (!stats) return null;
 
+    // İstatistik kartları için başlık düzenlemeleri
+    const statTitles = {
+        total_count: 'Toplam Deprem',
+        max_magnitude: 'En Büyük Deprem',
+        significant_count: 'Önemli Depremler (≥4.0)',
+        avg_depth: 'Ortalama Derinlik'
+    };
+
+    // Gösterilecek istatistiklerin sırası
+    const displayOrder = ['total_count', 'max_magnitude', 'significant_count', 'avg_depth'];
+
+    // Grafik genişliğini hesapla (sidebar genişliğini de hesaba katarak)
+    const chartWidth = Math.min(width - 300, 1000); // 300px sidebar için, 1000px maksimum genişlik
+
     return (
-        <Box p={3}>
+        <Box sx={{ maxWidth: 1200, mx: 'auto' }}> {/* Ana container'ı sınırla */}
             <Typography variant="h4" gutterBottom>
-                Deprem İzleme Paneli
+                Afet İzleme Paneli
             </Typography>
 
             {/* Özet İstatistikler */}
             <Grid container spacing={3} mb={4}>
-                {stats.dailyStats && Object.entries(stats.dailyStats).map(([key, value]) => (
+                {stats.dailyStats && displayOrder.map((key) => (
                     <Grid item xs={12} md={3} key={key}>
                         <Paper sx={{ 
                             p: 3, 
@@ -94,15 +124,29 @@ function Dashboard() {
                             '&:hover': {
                                 transform: 'translateY(-5px)',
                                 boxShadow: 3
-                            }
+                            },
+                            bgcolor: key === 'max_magnitude' ? 'error.light' : 
+                                    key === 'significant_count' ? 'warning.light' : 
+                                    key === 'avg_depth' ? 'info.light' : 'primary.light',
                         }}>
                             <Typography color="textSecondary" gutterBottom>
-                                {key.charAt(0).toUpperCase() + key.slice(1)}
+                                {statTitles[key]}
                             </Typography>
-                            <Typography variant="h3" component="div" color="primary">
-                                {value}
+                            <Typography variant="h3" component="div" 
+                                sx={{ 
+                                    color: key === 'max_magnitude' ? 'error.dark' : 
+                                           key === 'significant_count' ? 'warning.dark' : 
+                                           key === 'avg_depth' ? 'info.dark' : 'primary.dark'
+                                }}>
+                                {typeof stats.dailyStats[key] === 'number' ? 
+                                    stats.dailyStats[key].toFixed(1) : 
+                                    stats.dailyStats[key]}
                             </Typography>
-                            <Typography variant="subtitle1">{key === 'total_count' ? 'Deprem' : key === 'max_magnitude' ? 'Magnitude' : key === 'avg_magnitude' ? 'Magnitude' : 'km'}</Typography>
+                            <Typography variant="subtitle1">
+                                {key.includes('magnitude') ? 'Magnitude' : 
+                                 key.includes('depth') ? 'km' : 
+                                 key.includes('count') ? 'Adet' : ''}
+                            </Typography>
                         </Paper>
                     </Grid>
                 ))}
@@ -114,11 +158,15 @@ function Dashboard() {
                 <Grid item xs={12}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-                            Saatlik Deprem Dağılımı (Son 24 Saat)
+                            Son 24 Saatteki Deprem Aktivitesi
                         </Typography>
-                        <Box sx={{ height: '400px', width: '100%' }}>
+                        <Box sx={{ 
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'center'
+                        }}>
                             <LineChart
-                                width={1200}
+                                width={chartWidth}
                                 height={350}
                                 data={stats.hourlyStats}
                                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -139,14 +187,14 @@ function Dashboard() {
                                     type="monotone"
                                     dataKey="count"
                                     stroke="#8884d8"
-                                    name="Deprem Sayısı"
+                                    name="Deprem Sayısı (Adet)"
                                 />
                                 <Line
                                     yAxisId="right"
                                     type="monotone"
                                     dataKey="avg_magnitude"
                                     stroke="#82ca9d"
-                                    name="Ortalama Büyüklük"
+                                    name="Ortalama Büyüklük (M)"
                                 />
                             </LineChart>
                         </Box>
@@ -157,11 +205,15 @@ function Dashboard() {
                 <Grid item xs={12}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-                            Magnitude Dağılımı (Son 7 Gün)
+                            Haftalık Deprem Büyüklük Dağılımı
                         </Typography>
-                        <Box sx={{ height: '400px', width: '100%' }}>
+                        <Box sx={{ 
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'center'
+                        }}>
                             <BarChart
-                                width={1200}
+                                width={chartWidth}
                                 height={350}
                                 data={stats.magnitudeStats}
                                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -171,7 +223,11 @@ function Dashboard() {
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
-                                <Bar dataKey="count" fill="#8884d8" name="Deprem Sayısı" />
+                                <Bar 
+                                    dataKey="count" 
+                                    fill="#8884d8" 
+                                    name="Deprem Sayısı (Adet)" 
+                                />
                             </BarChart>
                         </Box>
                     </Paper>
@@ -181,27 +237,22 @@ function Dashboard() {
                 <Grid item xs={12}>
                     <Paper sx={{ p: 3 }}>
                         <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-                            Şehirlere Yakın Depremler (Son 24 Saat)
+                            Şehirlerdeki Deprem Aktivitesi (Son 24 Saat)
                         </Typography>
                         <Box sx={{ 
-                            overflowX: 'auto',
+                            width: '100%',
                             '& .MuiTable-root': {
-                                minWidth: 800,  // minimum genişlik
-                            },
-                            '& .MuiTableCell-root': {
-                                py: 2,  // dikey padding
-                                px: 3,  // yatay padding
-                            },
-                            '& .MuiTableRow-root:hover': {
-                                backgroundColor: 'rgba(0, 0, 0, 0.04)',  // hover efekti
+                                width: '100%',
+                                maxWidth: chartWidth,
+                                mx: 'auto'
                             }
                         }}>
                             <Table>
                                 <TableHead>
                                     <TableRow>
                                         <TableCell sx={{ fontWeight: 'bold' }}>Şehir</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Deprem Sayısı</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>En Yakın Deprem</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>Deprem Sayısı (24s)</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>En Yakın Deprem Mesafesi</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
