@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const earthquakesRouter = require('./routes/earthquakes');
 const citiesRouter = require('./routes/cities');
+const devicesRouter = require('./routes/devices');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -14,6 +15,7 @@ app.use(express.json());
 // Routes
 app.use('/api/earthquakes', earthquakesRouter);
 app.use('/api/cities', citiesRouter);
+app.use('/api/devices', devicesRouter);
 
 // Test route
 app.get('/', (req, res) => {

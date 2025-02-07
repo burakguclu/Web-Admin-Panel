@@ -1,15 +1,15 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Box, CssBaseline, Toolbar } from '@mui/material';
+import { Box, CssBaseline } from '@mui/material';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Users from './pages/Users';
-import Products from './pages/Products';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Notifications from './pages/Notifications';
 import Earthquakes from './pages/Earthquakes';
 import Cities from './pages/Cities';
+import Devices from './pages/Devices';
 
 const App = () => {
     return (
@@ -32,10 +32,10 @@ const App = () => {
                         <Routes>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/users" element={<Users />} />
-                            <Route path="/products" element={<Products />} />
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/cities" element={<Cities />} />
                             <Route path="/earthquakes" element={<Earthquakes />} />
+                            <Route path="/devices" element={<Devices />} />
                             <Route path="/settings" element={<Settings />} />
                             <Route path="/notifications" element={<Notifications />} />
                             <Route path="/" element={<Dashboard />} />

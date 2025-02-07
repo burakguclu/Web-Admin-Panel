@@ -16,13 +16,12 @@ import {
 } from '@mui/material';
 import { 
     Dashboard as DashboardIcon,
-    People as PeopleIcon,
-    Inventory as InventoryIcon,
-    Assessment as AssessmentIcon,
+    People as UsersIcon,
     Settings as SettingsIcon,
     Notifications as NotificationsIcon,
-    LocationCity as LocationCityIcon,
-    Warning as WarningIcon,
+    LocationCity as CitiesIcon,
+    Warning as EarthquakesIcon,
+    DeviceHub as DevicesIcon,
     Menu as MenuIcon,
     ChevronLeft as ChevronLeftIcon
 } from '@mui/icons-material';
@@ -41,11 +40,10 @@ const Sidebar = () => {
 
     const menuItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-        { text: 'Kullanıcılar', icon: <PeopleIcon />, path: '/users' },
-        { text: 'Ürünler', icon: <InventoryIcon />, path: '/products' },
-        { text: 'Raporlar', icon: <AssessmentIcon />, path: '/reports' },
-        { text: 'Şehirler', icon: <LocationCityIcon />, path: '/cities' },
-        { text: 'Depremler', icon: <WarningIcon />, path: '/earthquakes' },
+        { text: 'Depremler', icon: <EarthquakesIcon />, path: '/earthquakes' },
+        { text: 'Şehirler', icon: <CitiesIcon />, path: '/cities' },
+        { text: 'Cihazlar', icon: <DevicesIcon />, path: '/devices' },
+        { text: 'Kullanıcılar', icon: <UsersIcon />, path: '/users' },
         { text: 'Ayarlar', icon: <SettingsIcon />, path: '/settings' },
         { text: 'Bildirimler', icon: <NotificationsIcon />, path: '/notifications' },
     ];
