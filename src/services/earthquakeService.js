@@ -78,3 +78,13 @@ export const fetchRegionStats = async () => {
     throw error;
   }
 };
+
+export const fetchDashboardStats = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/earthquakes/stats/dashboard`);
+    return response.data;
+  } catch (error) {
+    console.error('Dashboard istatistikleri çekilirken hata oluştu:', error);
+    throw error;
+  }
+};

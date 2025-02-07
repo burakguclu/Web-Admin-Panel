@@ -14,21 +14,50 @@ const parseEarthquakeData = (text) => {
         try {
           const parts = line.trim().split(/\s+/);
           
+          // Tarih ve saat kontrolü
           const date = parts[0];
           const time = parts[1];
+          const dateObj = new Date(`${date} ${time}`);
+          if (isNaN(dateObj.getTime())) {
+            console.error('Geçersiz tarih:', date, time);
+            return null;
+          }
+
+          // Koordinat kontrolü
           const latitude = parseFloat(parts[2]);
           const longitude = parseFloat(parts[3]);
+          if (isNaN(latitude) || isNaN(longitude)) {
+            console.error('Geçersiz koordinatlar:', parts[2], parts[3]);
+            return null;
+          }
+
+          // Diğer sayısal değerlerin kontrolü
           const depth = parseFloat(parts[4]);
           const md = parts[5] === '-.-' ? null : parseFloat(parts[5]);
           const ml = parts[6] === '-.-' ? null : parseFloat(parts[6]);
           const mw = parts[7] === '-.-' ? null : parseFloat(parts[7]);
-          const location = parts.slice(8).join(' ').split('İlksel')[0].trim();
 
-          const magnitudes = [md, ml, mw].filter(m => m !== null);
-          const maxMagnitude = magnitudes.length > 0 ? Math.max(...magnitudes) : 0;
+          if (isNaN(depth)) {
+            console.error('Geçersiz derinlik:', parts[4]);
+            return null;
+          }
+
+          const location = parts.slice(8).join(' ')
+            .split('İlksel')[0]
+            .replace(/[()]/g, '')
+            .trim()
+            .toUpperCase();
+
+          const magnitudes = [md, ml, mw].filter(m => m !== null && !isNaN(m));
+          const maxMagnitude = magnitudes.length > 0 ? Math.max(...magnitudes) : null;
+
+          if (maxMagnitude === null) {
+            console.error('Geçersiz büyüklük değerleri:', md, ml, mw);
+            return null;
+          }
 
           return {
-            date: new Date(`${date} ${time}`),
+            date: dateObj,
             latitude,
             longitude,
             depth,
@@ -39,7 +68,7 @@ const parseEarthquakeData = (text) => {
             mw
           };
         } catch (err) {
-          console.error('Satır ayrıştırma hatası:', err);
+          console.error('Satır ayrıştırma hatası:', err, 'Satır:', line);
           return null;
         }
       })
@@ -62,35 +91,46 @@ const syncEarthquakes = async () => {
     
     // Her bir deprem verisi için
     for (const eq of earthquakes) {
-      // Aynı tarih ve koordinatlara sahip deprem var mı kontrol et
-      const [existing] = await db.sequelize.query(`
-        SELECT id FROM earthquakes 
-        WHERE date = :date 
-        AND latitude = :latitude 
-        AND longitude = :longitude
-      `, {
-        replacements: { 
-          date: eq.date,
-          latitude: eq.latitude,
-          longitude: eq.longitude
-        },
-        type: Sequelize.QueryTypes.SELECT
-      });
+      try {
+        // Veri doğrulama
+        if (!eq.date || !eq.latitude || !eq.longitude || !eq.magnitude) {
+          console.error('Eksik veri:', eq);
+          continue;
+        }
 
-      if (!existing) {
-        // Yeni deprem verisini ekle
-        await db.sequelize.query(`
-          INSERT INTO earthquakes (
-            date, latitude, longitude, depth, magnitude, 
-            location, md, ml, mw, "createdAt", "updatedAt"
-          ) VALUES (
-            :date, :latitude, :longitude, :depth, :magnitude,
-            :location, :md, :ml, :mw, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-          )
+        // Aynı tarih ve koordinatlara sahip deprem var mı kontrol et
+        const [existing] = await db.sequelize.query(`
+          SELECT id FROM earthquakes 
+          WHERE date = :date 
+          AND latitude = :latitude 
+          AND longitude = :longitude
         `, {
-          replacements: eq,
-          type: Sequelize.QueryTypes.INSERT
+          replacements: { 
+            date: eq.date,
+            latitude: eq.latitude,
+            longitude: eq.longitude
+          },
+          type: Sequelize.QueryTypes.SELECT
         });
+
+        if (!existing) {
+          // Yeni deprem verisini ekle
+          await db.sequelize.query(`
+            INSERT INTO earthquakes (
+              date, latitude, longitude, depth, magnitude, 
+              location, md, ml, mw, "createdAt", "updatedAt"
+            ) VALUES (
+              :date, :latitude, :longitude, :depth, :magnitude,
+              :location, :md, :ml, :mw, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            )
+          `, {
+            replacements: eq,
+            type: Sequelize.QueryTypes.INSERT
+          });
+        }
+      } catch (err) {
+        console.error('Deprem verisi eklenirken hata:', err, 'Veri:', eq);
+        continue;
       }
     }
     
