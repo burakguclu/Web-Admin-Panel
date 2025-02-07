@@ -23,6 +23,6 @@ app.get('/', (req, res) => {
   res.json({ message: 'Backend API is running' });
 });
 
-app.listen(port, () => {
+app.listen(process.env.port || 5000, () => {
   console.log(`Server running on port ${port}`);
 }); 

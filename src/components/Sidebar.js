@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@mui/material/styles';
 import { 
     Drawer, 
     List, 
@@ -9,16 +10,13 @@ import {
     Box,
     Typography,
     IconButton,
-    useTheme,
     useMediaQuery,
     AppBar,
     Toolbar
 } from '@mui/material';
 import { 
     Dashboard as DashboardIcon,
-    People as UsersIcon,
     Settings as SettingsIcon,
-    Notifications as NotificationsIcon,
     LocationCity as CitiesIcon,
     Warning as EarthquakesIcon,
     DeviceHub as DevicesIcon,
@@ -54,8 +52,10 @@ const Sidebar = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 2,
-                    background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                    color: 'white'
+                    background: theme.palette.mode === 'dark'
+                        ? 'linear-gradient(45deg, #1e1e1e 30%, #2c2c2c 90%)'
+                        : 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                    color: theme.palette.mode === 'dark' ? '#fff' : '#fff'
                 }}
             >
                 <img 
@@ -79,7 +79,7 @@ const Sidebar = () => {
                     Admin Panel
                 </Typography>
                 {isMobile && (
-                    <IconButton onClick={handleDrawerToggle} sx={{ color: 'white' }}>
+                    <IconButton onClick={handleDrawerToggle} sx={{ color: '#fff' }}>
                         <ChevronLeftIcon />
                     </IconButton>
                 )}
@@ -100,23 +100,35 @@ const Sidebar = () => {
                             borderRadius: 1,
                             mb: 0.5,
                             '&.Mui-selected': {
-                                backgroundColor: 'primary.main',
-                                color: 'white',
+                                backgroundColor: theme.palette.mode === 'dark' 
+                                    ? 'rgba(144, 202, 249, 0.2)' 
+                                    : 'primary.main',
+                                color: theme.palette.mode === 'dark' 
+                                    ? '#90caf9' 
+                                    : 'white',
                                 '&:hover': {
-                                    backgroundColor: 'primary.dark',
+                                    backgroundColor: theme.palette.mode === 'dark'
+                                        ? 'rgba(144, 202, 249, 0.3)'
+                                        : 'primary.dark',
                                 },
                                 '& .MuiListItemIcon-root': {
-                                    color: 'white',
+                                    color: theme.palette.mode === 'dark' 
+                                        ? '#90caf9' 
+                                        : 'white',
                                 },
                             },
                             '&:hover': {
-                                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                                backgroundColor: theme.palette.mode === 'dark'
+                                    ? 'rgba(144, 202, 249, 0.08)'
+                                    : 'rgba(25, 118, 210, 0.08)',
                             },
                         }}
                     >
                         <ListItemIcon 
                             sx={{ 
-                                color: location.pathname === item.path ? 'white' : 'primary.main',
+                                color: location.pathname === item.path 
+                                    ? (theme.palette.mode === 'dark' ? '#90caf9' : 'white')
+                                    : (theme.palette.mode === 'dark' ? '#fff' : 'primary.main'),
                                 minWidth: '40px'
                             }}
                         >
@@ -142,7 +154,9 @@ const Sidebar = () => {
                     position="fixed" 
                     sx={{ 
                         display: { md: 'none' },
-                        background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                        background: theme.palette.mode === 'dark'
+                            ? 'linear-gradient(45deg, #1e1e1e 30%, #2c2c2c 90%)'
+                            : 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
                         zIndex: (theme) => theme.zIndex.drawer + 1
                     }}
                 >
@@ -191,6 +205,7 @@ const Sidebar = () => {
                                 width: 240,
                                 boxSizing: 'border-box',
                                 boxShadow: 3,
+                                bgcolor: theme.palette.mode === 'dark' ? '#121212' : '#fff',
                                 marginTop: '64px'
                             },
                         }}
@@ -206,6 +221,7 @@ const Sidebar = () => {
                                 width: 240,
                                 boxSizing: 'border-box',
                                 boxShadow: 3,
+                                bgcolor: theme.palette.mode === 'dark' ? '#121212' : '#fff',
                                 border: 'none'
                             },
                         }}
