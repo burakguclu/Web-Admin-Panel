@@ -378,20 +378,31 @@ const Settings = ({ setMode }) => {
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        {hasUnsavedChanges && (
-          <Typography color="warning.main">
-            * Kaydedilmemiş değişiklikler var
-          </Typography>
-        )}
+      <Box 
+        sx={{ 
+          mt: 3, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          position: 'sticky',
+          bottom: 16,
+          bgcolor: 'background.default',
+          zIndex: 1,
+          py: 2,
+          display: hasUnsavedChanges ? 'flex' : 'none'
+        }}
+      >
+        <Typography color="warning.main">
+          * Kaydedilmemiş değişiklikler var
+        </Typography>
         <Button
           variant="contained"
           startIcon={<SaveIcon />}
           onClick={handleSave}
           sx={{ minWidth: 200 }}
-          color={hasUnsavedChanges ? "warning" : "primary"}
+          color="warning"
         >
-          {hasUnsavedChanges ? 'Değişiklikleri Kaydet' : 'Ayarları Kaydet'}
+          Değişiklikleri Kaydet
         </Button>
       </Box>
 
@@ -399,12 +410,18 @@ const Settings = ({ setMode }) => {
         open={showAlert}
         autoHideDuration={6000}
         onClose={() => setShowAlert(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ 
+          top: '24px !important',
+          zIndex: (theme) => theme.zIndex.drawer + 2
+        }}
       >
         <Alert 
           onClose={() => setShowAlert(false)} 
           severity={alertSeverity}
           variant="filled"
+          elevation={6}
+          sx={{ width: '100%' }}
         >
           {alertMessage}
         </Alert>

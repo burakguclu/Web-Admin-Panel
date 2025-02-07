@@ -77,7 +77,7 @@ const App = () => {
                             minHeight: '100vh',
                             width: '100%',
                             bgcolor: 'background.default',
-                            marginTop: { xs: '64px', sm: '64px', md: 0 }, // AppBar yüksekliği kadar margin
+                            marginTop: { xs: '64px', sm: '64px', md: 0 },
                             position: 'relative'
                         }}
                     >

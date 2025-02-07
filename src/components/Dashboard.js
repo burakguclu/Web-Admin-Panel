@@ -103,6 +103,20 @@ function Dashboard() {
     // Grafik genişliğini hesapla (sidebar genişliğini de hesaba katarak)
     const chartWidth = Math.min(width - 300, 1000); // 300px sidebar için, 1000px maksimum genişlik
 
+    const maxValue = Math.max(...stats.hourlyStats.map(d => d.count));
+    const options = {
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: maxValue + 5,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        },
+        // ... diğer ayarlar
+    };
+
     return (
         <Box sx={{ maxWidth: 1200, mx: 'auto' }}> {/* Ana container'ı sınırla */}
             <Typography variant="h4" gutterBottom>
@@ -169,17 +183,27 @@ function Dashboard() {
                                 width={chartWidth}
                                 height={350}
                                 data={stats.hourlyStats}
-                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                                margin={{ top: 30, right: 40, left: 20, bottom: 20 }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis 
                                     dataKey="hour" 
                                     tickFormatter={(value) => new Date(value).toLocaleTimeString('tr-TR', { hour: '2-digit' })}
                                 />
-                                <YAxis yAxisId="left" />
-                                <YAxis yAxisId="right" orientation="right" />
+                                <YAxis 
+                                    yAxisId="left"
+                                    domain={[0, (dataMax) => Math.ceil(dataMax + 5)]}
+                                    padding={{ top: 20 }}
+                                />
+                                <YAxis 
+                                    yAxisId="right" 
+                                    orientation="right"
+                                    domain={[0, (dataMax) => Math.ceil(dataMax + 1)]}
+                                    padding={{ top: 20 }}
+                                />
                                 <Tooltip 
                                     labelFormatter={(value) => new Date(value).toLocaleString('tr-TR')}
+                                    wrapperStyle={{ zIndex: 1000 }}
                                 />
                                 <Legend />
                                 <Line
@@ -188,6 +212,7 @@ function Dashboard() {
                                     dataKey="count"
                                     stroke="#8884d8"
                                     name="Deprem Sayısı (Adet)"
+                                    dot={{ strokeWidth: 2 }}
                                 />
                                 <Line
                                     yAxisId="right"
@@ -195,6 +220,7 @@ function Dashboard() {
                                     dataKey="avg_magnitude"
                                     stroke="#82ca9d"
                                     name="Ortalama Büyüklük (M)"
+                                    dot={{ strokeWidth: 2 }}
                                 />
                             </LineChart>
                         </Box>

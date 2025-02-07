@@ -1,30 +1,38 @@
-import { useEffect, useCallback } from 'react';
-import { useNavigate, useLocation, useBlocker } from 'react-router-dom';
+import { useCallback, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export function usePrompt(message, when = true) {
-  const blocker = useBlocker(when);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (blocker.state === "blocked") {
-      const confirmed = window.confirm(message);
-      if (confirmed) {
-        blocker.proceed();
-      } else {
-        blocker.reset();
-      }
-    }
-  }, [blocker, message]);
-
-  // Browser/sekme kapatma için
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
+  const handleBeforeUnload = useCallback(
+    (event) => {
       if (when) {
-        e.preventDefault();
-        e.returnValue = message;
+        event.preventDefault();
+        event.returnValue = message;
+        return message;
       }
-    };
+    },
+    [when, message]
+  );
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [when, message]);
+  useEffect(() => {
+    if (when) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, [when, handleBeforeUnload]);
+
+  useEffect(() => {
+    if (!when) return;
+
+    const unblock = navigate((nextLocation) => {
+      if (window.confirm(message)) {
+        return true;
+      }
+      return false;
+    });
+
+    return unblock;
+  }, [when, navigate, message, location]);
 } 
