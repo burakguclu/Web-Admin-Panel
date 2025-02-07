@@ -14,7 +14,8 @@ import {
   Paper,
   Chip,
   CircularProgress,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
 import { fetchEarthquakes } from '../services/earthquakeService';
 
@@ -23,30 +24,35 @@ function Earthquakes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const getEarthquakes = async () => {
-      try {
-        const data = await fetchEarthquakes();
-        setEarthquakes(data);
-        setLoading(false);
-      } catch (err) {
-        setError('Deprem verileri yüklenirken bir hata oluştu.');
-        setLoading(false);
-      }
-    };
+  const loadEarthquakes = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchEarthquakes();
+      setEarthquakes(data);
+    } catch (err) {
+      setError('Deprem verileri yüklenirken bir hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    getEarthquakes();
+  useEffect(() => {
+    loadEarthquakes();
   }, []);
+
+  const handleRefresh = () => {
+    loadEarthquakes();
+  };
 
   const getMagnitudeColor = (magnitude) => {
     if (magnitude >= 4.0) return '#ff1744';
     if (magnitude >= 3.0) return '#ff9100';
-    return '#4caf50';
+    return '#00c853';
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
         <CircularProgress />
       </Box>
     );
@@ -54,66 +60,61 @@ function Earthquakes() {
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Box m={2}>
         <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
 
-  const lastBigEarthquake = earthquakes
-    .filter(eq => eq.maxMagnitude >= 4.0)
-    .sort((a, b) => b.maxMagnitude - a.maxMagnitude)[0];
-
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Son Depremler
-      </Typography>
+    <Box p={3}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h5" component="h2">
+          Son Depremler
+        </Typography>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleRefresh}
+          disabled={loading}
+        >
+          {loading ? 'Yükleniyor...' : 'Yenile'}
+        </Button>
+      </Box>
 
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Grid container spacing={3} mb={3}>
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Son 24 Saat
+              <Typography color="textSecondary" gutterBottom>
+                Toplam Deprem
               </Typography>
-              <Typography variant="h3" color="primary">
+              <Typography variant="h4">
                 {earthquakes.length}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Toplam Deprem Sayısı
-              </Typography>
             </CardContent>
           </Card>
         </Grid>
-
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography color="textSecondary" gutterBottom>
                 En Şiddetli Deprem
               </Typography>
-              <Typography variant="h3" color="error">
-                {lastBigEarthquake?.maxMagnitude.toFixed(1) || '-'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {lastBigEarthquake?.location || '-'}
+              <Typography variant="h4">
+                {Math.max(...earthquakes.map(eq => eq.magnitude)).toFixed(1)}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-
         <Grid item xs={12} md={4}>
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
+              <Typography color="textSecondary" gutterBottom>
                 Ortalama Derinlik
               </Typography>
-              <Typography variant="h3" color="info.main">
-                {(earthquakes.reduce((acc, eq) => acc + eq.depth, 0) / earthquakes.length).toFixed(1)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                kilometre
+              <Typography variant="h4">
+                {(earthquakes.reduce((acc, eq) => acc + eq.depth, 0) / earthquakes.length).toFixed(1)} km
               </Typography>
             </CardContent>
           </Card>
@@ -140,10 +141,10 @@ function Earthquakes() {
                 <TableCell>{earthquake.location}</TableCell>
                 <TableCell align="right">
                   <Chip
-                    label={earthquake.maxMagnitude.toFixed(1)}
+                    label={earthquake.magnitude.toFixed(1)}
                     size="small"
                     sx={{
-                      bgcolor: getMagnitudeColor(earthquake.maxMagnitude),
+                      bgcolor: getMagnitudeColor(earthquake.magnitude),
                       color: 'white'
                     }}
                   />
