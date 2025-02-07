@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
   Table,
   TableBody,
   TableCell,
@@ -12,10 +7,10 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Chip,
+  Box,
+  Typography,
   CircularProgress,
-  Alert,
-  Button
+  Alert
 } from '@mui/material';
 import { fetchEarthquakes } from '../services/earthquakeService';
 
@@ -24,31 +19,27 @@ function Earthquakes() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadEarthquakes = async () => {
-    try {
-      setLoading(true);
-      const data = await fetchEarthquakes();
-      setEarthquakes(data);
-    } catch (err) {
-      setError('Deprem verileri yüklenirken bir hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadEarthquakes = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchEarthquakes();
+        // Magnitude'u number'a çevir
+        const formattedData = data.map(eq => ({
+          ...eq,
+          magnitude: parseFloat(eq.magnitude) || 0
+        }));
+        setEarthquakes(formattedData);
+      } catch (err) {
+        setError('Deprem verileri yüklenirken bir hata oluştu.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadEarthquakes();
   }, []);
-
-  const handleRefresh = () => {
-    loadEarthquakes();
-  };
-
-  const getMagnitudeColor = (magnitude) => {
-    if (magnitude >= 4.0) return '#ff1744';
-    if (magnitude >= 3.0) return '#ff9100';
-    return '#00c853';
-  };
 
   if (loading) {
     return (
@@ -68,90 +59,52 @@ function Earthquakes() {
 
   return (
     <Box p={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h5" component="h2">
-          Son Depremler
-        </Typography>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={handleRefresh}
-          disabled={loading}
-        >
-          {loading ? 'Yükleniyor...' : 'Yenile'}
-        </Button>
-      </Box>
-
-      <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Toplam Deprem
-              </Typography>
-              <Typography variant="h4">
-                {earthquakes.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                En Şiddetli Deprem
-              </Typography>
-              <Typography variant="h4">
-                {Math.max(...earthquakes.map(eq => eq.magnitude)).toFixed(1)}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>
-                Ortalama Derinlik
-              </Typography>
-              <Typography variant="h4">
-                {(earthquakes.reduce((acc, eq) => acc + eq.depth, 0) / earthquakes.length).toFixed(1)} km
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
+      <Typography variant="h5" component="h2" gutterBottom>
+        Son Depremler
+      </Typography>
+      
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Tarih/Saat</TableCell>
+              <TableCell>Tarih</TableCell>
+              <TableCell>Saat</TableCell>
               <TableCell>Konum</TableCell>
               <TableCell align="right">Büyüklük</TableCell>
-              <TableCell align="right">Derinlik</TableCell>
-              <TableCell align="right">Enlem/Boylam</TableCell>
+              <TableCell align="right">Derinlik (km)</TableCell>
+              <TableCell align="right">Enlem</TableCell>
+              <TableCell align="right">Boylam</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {earthquakes.map((earthquake) => (
-              <TableRow key={earthquake.id}>
+              <TableRow 
+                key={`${earthquake.date}-${earthquake.latitude}-${earthquake.longitude}`}
+                sx={{
+                  backgroundColor: 
+                    earthquake.magnitude >= 4.0 ? 'rgba(255, 0, 0, 0.1)' :
+                    earthquake.magnitude >= 3.0 ? 'rgba(255, 165, 0, 0.1)' : 
+                    'inherit'
+                }}
+              >
                 <TableCell>
-                  {earthquake.date} {earthquake.time}
+                  {new Date(earthquake.date).toLocaleDateString('tr-TR')}
+                </TableCell>
+                <TableCell>
+                  {new Date(earthquake.date).toLocaleTimeString('tr-TR')}
                 </TableCell>
                 <TableCell>{earthquake.location}</TableCell>
                 <TableCell align="right">
-                  <Chip
-                    label={earthquake.magnitude.toFixed(1)}
-                    size="small"
-                    sx={{
-                      bgcolor: getMagnitudeColor(earthquake.magnitude),
-                      color: 'white'
-                    }}
-                  />
+                  {earthquake.magnitude.toFixed(1)}
                 </TableCell>
-                <TableCell align="right">{earthquake.depth} km</TableCell>
                 <TableCell align="right">
-                  {earthquake.latitude}°N / {earthquake.longitude}°E
+                  {parseFloat(earthquake.depth).toFixed(1)}
+                </TableCell>
+                <TableCell align="right">
+                  {parseFloat(earthquake.latitude).toFixed(4)}
+                </TableCell>
+                <TableCell align="right">
+                  {parseFloat(earthquake.longitude).toFixed(4)}
                 </TableCell>
               </TableRow>
             ))}
@@ -162,4 +115,4 @@ function Earthquakes() {
   );
 }
 
-export default Earthquakes; 
+export default Earthquakes;

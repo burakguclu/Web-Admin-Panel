@@ -52,9 +52,29 @@ export const parseEarthquakeData = (text) => {
 export const fetchEarthquakes = async () => {
   try {
     const response = await axios.get(`${API_URL}/earthquakes`);
-    return parseEarthquakeData(response.data);
+    return response.data;
   } catch (error) {
     console.error('Deprem verileri çekilirken hata oluştu:', error);
+    throw error;
+  }
+};
+
+export const fetchDailyStats = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/earthquakes/stats/daily`);
+    return response.data;
+  } catch (error) {
+    console.error('Günlük istatistikler çekilirken hata oluştu:', error);
+    throw error;
+  }
+};
+
+export const fetchRegionStats = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/earthquakes/stats/regions`);
+    return response.data;
+  } catch (error) {
+    console.error('Bölge istatistikleri çekilirken hata oluştu:', error);
     throw error;
   }
 };

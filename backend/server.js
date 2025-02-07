@@ -4,6 +4,7 @@ const cors = require('cors');
 const earthquakesRouter = require('./routes/earthquakes');
 const citiesRouter = require('./routes/cities');
 const devicesRouter = require('./routes/devices');
+require('./services/earthquakeSync');
 
 const app = express();
 const port = process.env.PORT || 5000;
