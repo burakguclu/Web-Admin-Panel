@@ -43,9 +43,7 @@ const Sidebar = () => {
         { text: 'Depremler', icon: <EarthquakesIcon />, path: '/earthquakes' },
         { text: 'Şehirler', icon: <CitiesIcon />, path: '/cities' },
         { text: 'Cihazlar', icon: <DevicesIcon />, path: '/devices' },
-        { text: 'Kullanıcılar', icon: <UsersIcon />, path: '/users' },
-        { text: 'Ayarlar', icon: <SettingsIcon />, path: '/settings' },
-        { text: 'Bildirimler', icon: <NotificationsIcon />, path: '/notifications' },
+        { text: 'Ayarlar', icon: <SettingsIcon />, path: '/settings' }
     ];
 
     const drawerContent = (
