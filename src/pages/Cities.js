@@ -18,11 +18,12 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  TextField
 } from '@mui/material';
 import { fetchCities, updateCityRiskLevel } from '../services/cityService';
 
-function Cities() {
+const Cities = () => {
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,6 +41,7 @@ function Cities() {
       setCities(data);
     } catch (err) {
       setError('Şehir verileri yüklenirken bir hata oluştu.');
+      console.error('Şehir verisi yükleme hatası:', err);
     } finally {
       setLoading(false);
     }
@@ -101,6 +103,29 @@ function Cities() {
         Şehirler
       </Typography>
 
+      <Box mb={3} display="flex" gap={2}>
+        <TextField
+          label="Şehir Ara"
+          variant="outlined"
+          size="small"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          sx={{ minWidth: 200 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Sıralama</InputLabel>
+          <Select
+            value={sortBy}
+            label="Sıralama"
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <MenuItem value="name">İsme Göre</MenuItem>
+            <MenuItem value="population">Nüfusa Göre</MenuItem>
+            <MenuItem value="risk">Risk Seviyesine Göre</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -147,6 +172,6 @@ function Cities() {
       </TableContainer>
     </Box>
   );
-}
+};
 
 export default Cities; 

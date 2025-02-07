@@ -1,8 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:5000/api';
-
-// Local storage keys
+// axios ve API_URL kullanılmadığı için kaldırıldı
 const THEME_MODE_KEY = 'themeMode';
 
 export const getThemeMode = () => {

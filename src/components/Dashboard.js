@@ -21,14 +21,9 @@ import {
     Tooltip,
     Legend,
     LineChart,
-    Line,
-    PieChart,
-    Pie,
-    Cell
+    Line
 } from 'recharts';
 import { fetchDashboardStats } from '../services/earthquakeService';
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 function useWindowSize() {
     const [size, setSize] = useState([0, 0]);
@@ -102,20 +97,6 @@ function Dashboard() {
 
     // Grafik genişliğini hesapla (sidebar genişliğini de hesaba katarak)
     const chartWidth = Math.min(width - 300, 1000); // 300px sidebar için, 1000px maksimum genişlik
-
-    const maxValue = Math.max(...stats.hourlyStats.map(d => d.count));
-    const options = {
-        scales: {
-            y: {
-                beginAtZero: true,
-                max: maxValue + 5,
-                ticks: {
-                    stepSize: 1
-                }
-            }
-        },
-        // ... diğer ayarlar
-    };
 
     return (
         <Box sx={{ maxWidth: 1200, mx: 'auto' }}> {/* Ana container'ı sınırla */}

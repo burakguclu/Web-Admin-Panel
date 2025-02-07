@@ -1,8 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Switch,
   FormControlLabel,
@@ -21,21 +19,15 @@ import {
   Notifications as NotificationsIcon,
   Refresh as RefreshIcon,
   Save as SaveIcon,
-  Security as SecurityIcon,
-  Language as LanguageIcon,
-  DataUsage as DataUsageIcon,
   DarkMode as DarkModeIcon,
-  Translate as TranslateIcon,
-  AccessTime as AccessTimeIcon,
   Storage as StorageIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  DataUsage as DataUsageIcon
 } from '@mui/icons-material';
 import { saveSettings } from '../services/settingsService';
 import { usePrompt } from '../hooks/usePrompt';
 
 const Settings = ({ setMode }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [settings, setSettings] = useState({
     notifications: {
       enabled: true,
@@ -381,15 +373,14 @@ const Settings = ({ setMode }) => {
       <Box 
         sx={{ 
           mt: 3, 
-          display: 'flex', 
+          display: hasUnsavedChanges ? 'flex' : 'none',
           justifyContent: 'space-between', 
           alignItems: 'center',
           position: 'sticky',
           bottom: 16,
           bgcolor: 'background.default',
           zIndex: 1,
-          py: 2,
-          display: hasUnsavedChanges ? 'flex' : 'none'
+          py: 2
         }}
       >
         <Typography color="warning.main">
